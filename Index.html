@@ -1,0 +1,249 @@
+<!--<html>
+	<head>
+	<script src="headtrackr.js"></script>
+
+	</head>
+
+	<body>
+	<canvas id="inputCanvas" width="320" height="240" style="display:none"></canvas>
+<video id="inputVideo" autoplay loop></video>
+<script type="text/javascript">
+  var videoInput = document.getElementById('inputVideo');
+  var canvasInput = document.getElementById('inputCanvas');
+
+  var htracker = new headtrackr.Tracker();
+  htracker.init(videoInput, canvasInput);
+  htracker.start();
+</script>
+	</body>
+</html>
+-->	
+<html lang="en">
+	<head>
+		<title>sprites</title>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+		
+		
+	</head>
+	<style>
+	body,html{
+		overflow: hidden;
+	}
+	#square{
+		position: absolute;;
+		width: 300px;
+		height: 300px;
+		background: #ff8900;
+		opacity: 0.5;
+
+	}
+	#output{
+		float: right;;
+	}
+	#resetbt{
+		width: 250px;
+		height: 250px;
+		float: right;;
+	}
+	</style>
+	<body>
+
+		<script src="Three.js"></script>
+		<script src="Stats.js"></script>
+		<script src="headtrackr.js"></script>
+		<script src="jquery.js"></script>
+		<div id="square"></div>
+		<canvas id="compare" width="320" height="240" style="display:none"></canvas>
+		<video id="vid" autoplay loop style="display:none;" ></video>
+		<div id="output">output</div><br>
+		<input type="button" onclick="reset()" value="reset" id="resetbt">
+		<script>
+			// 3d model setup
+			
+	var container, stats;
+	var camera, scene, renderer;
+	var plane;	
+	var width = $(document).width();
+	var height = $(document).height();
+	var gx = 0;
+	var gy = 0;
+	var videoInput = document.getElementById('vid');
+	var canvasInput = document.getElementById('compare');
+	var ready = false;
+	var projector = new THREE.Projector();
+	var objects = [];
+	var myBox = $('#square');
+	var inix = 0;
+	var iniy = 0;
+	var offsetX = -20;
+	var offsetY = 0;
+	var PI2 = Math.PI * 2;
+	var offsetReady = false;
+
+	function particleRender(context) {
+	    context.beginPath();
+	    context.arc(0, 0, 1, 0, PI2, true);
+	    context.fill();
+	};
+
+	var placeTarget = function(x, y, z) {
+	    var targetObject = new THREE.Object3D();
+	    targetObject.name = "posidad";
+	    // Create sprites with lines
+
+	    var sprite = new THREE.Particle(new THREE.ParticleCanvasMaterial({
+	        color: Math.random() * 0x808008 + 0x808080,
+	        program: particleRender
+	    }));
+	    sprite.name="posi";
+	    sprite.scale.x = 1;
+	    sprite.scale.y = 1;
+	    //sprite.position.x = x * z / 1000;
+	    //sprite.position.y = y * z / 1000;
+	    sprite.position.x = 0;
+	    sprite.position.y = 0;
+	    
+	    sprite.position.z = z;
+	    targetObject.add(sprite);
+
+	    var geometry = new THREE.Geometry();
+	    geometry.vertices.push(new THREE.Vector3(-sprite.position.x, -sprite.position.y, 0));
+	    geometry.vertices.push(new THREE.Vector3(0, 0, z));
+
+	    scene.add(targetObject);
+
+	    objects.push(sprite);
+
+	    myBox.css("left",$(window).width()/2-  myBox.width()/2);
+	    myBox.css("top",$(window).height()/2 - myBox.height()/2);
+	    inix = parseFloat(myBox.css("left"));
+	    iniy = parseFloat(myBox.css("top"));
+
+	    return targetObject;
+
+
+	}
+
+	init();
+	animate();
+
+
+	function init() {
+
+	    container = document.createElement('div');
+	    document.body.appendChild(container);
+
+	    scene = new THREE.Scene();
+
+	    camera = new THREE.PerspectiveCamera(23, window.innerWidth / window.innerHeight, 1, 100000);
+	    camera.position.z = 0;
+	    scene.add(camera);
+
+	    placeTarget(0,0,100);
+
+	    renderer = new THREE.CanvasRenderer();
+	    renderer.setSize(window.innerWidth, window.innerHeight);
+
+	    container.appendChild(renderer.domElement);
+
+	    stats = new Stats();
+	    stats.domElement.style.position = 'absolute';
+	    stats.domElement.style.top = '0px';
+	    
+
+	}
+
+	function animate() {
+
+	    renderer.render(scene, camera);
+
+	   // stats.update();
+
+	    requestAnimationFrame(animate);
+	  //if(selectedObject!= null)
+
+	  	updateBox(camera);
+
+	  	//var x = camera.position.x;
+
+	  	//$('#output').html("Ageag"+(inix+ x*2.5+offsetX));
+	}
+
+	function updateBox(camera){
+
+		var x = camera.position.x;
+
+		var y = camera.position.y;
+
+		var z = camera.position.z;
+
+		var l = parseFloat(myBox.css("left"));
+
+		var t = parseFloat(myBox.css("top"));
+
+
+		var scale = 15;
+		var yscale = -10;
+		if(offsetReady == false && x != 0){
+		 myBox.css("left", inix + x*scale);
+		 myBox.css("top", iniy + y*yscale);
+		 var ct = parseFloat(myBox.css("top"));
+		 var cl = parseFloat(myBox.css("left"));
+		 console.log("get container "+ct);
+		 console.log("starting y is "+ iniy);
+		 offsetX = (inix - cl);
+		 offsetY = Math.abs(iniy - ct);
+		 console.log(offsetY);
+		 $('#output').html(offsetY);
+		 offsetReady = true;
+		}
+		
+		if(inix + x*scale+offsetX < ($(window).width()-myBox.width()) )
+			myBox.css("left",inix + x*scale+offsetX);
+
+		myBox.css("top",iniy + y*yscale+offsetY);
+
+	}
+
+	Array.prototype.remove = function(object) {
+	    for (var i = 0; i < this.length; i++) {
+	        if (this[i] === object) {
+	            this.splice(i, 1);
+	            break;
+	        }
+	    }
+	}
+
+	function randomTarget() {
+	    // Create sprites with lines
+	    x = (Math.random() * 400) - 200;
+	    y = (Math.random() * 400) - 200;
+	    z = 400 * (Math.random() + 0.2);
+	    placeTarget(x, y, z);
+	}
+
+	function reset(){
+		offsetReady = false;
+
+	}
+	// video styling
+	videoInput.style.position = 'absolute';
+	
+	// set up camera controller
+	headtrackr.controllers.three.realisticAbsoluteCameraControl(camera, 10, [0, 0, 0], new THREE.Vector3(0, 0, 0), {
+	    damping: 0.5
+	});
+
+	// Face detection setup
+	/*
+	var htracker = new headtrackr.Tracker({altVideo : {ogv : "./media/capture5.ogv", mp4 : "./media/capture5.mp4"}, cameraOffset : 5});
+	htracker.init(videoInput, canvasInput);
+	htracker.start();
+	*/
+	var htracker = new headtrackr.Tracker();
+	htracker.init(videoInput, canvasInput);
+	htracker.start();
+		</script>
+	</body>
+</html>
